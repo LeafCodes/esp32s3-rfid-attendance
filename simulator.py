@@ -8,9 +8,14 @@ from datetime import datetime
 
 BASE_URL = "http://localhost:8000/api"
 
+def print_header(title):
+    print(f"\n{'='*45}")
+    print(f" {title}")
+    print(f"{'='*45}")
+
 def tap_card(uid, silent=False):
     if not silent:
-        print(f"[*] Mensimulasikan tap kartu dengan UID: {uid}")
+        print(f"[*] Mengirim data kehadiran untuk UID: '{uid}'...")
     
     payload = {
         "uid": uid,
@@ -20,29 +25,55 @@ def tap_card(uid, silent=False):
     }
     
     try:
+        start = time.time()
         response = requests.post(f"{BASE_URL}/attendance", json=payload)
+        elapsed = (time.time() - start) * 1000
+        
         if not silent:
             if response.status_code == 200:
                 data = response.json()
-                print(f"[SUCCESS] Status: {data.get('inout')} | Pesan: {data.get('message')}")
+                print(f"  [√] SUKSES ({elapsed:.0f}ms)")
+                print(f"  [-] Status Absen : {data.get('inout')}")
+                print(f"  [-] Pesan Server : {data.get('message')}")
             else:
-                print(f"[ERROR] {response.status_code} - {response.text}")
+                print(f"  [X] GAGAL (HTTP {response.status_code})")
+                print(f"  [-] Detail Error : {response.text}")
         return response.status_code
     except requests.exceptions.ConnectionError:
         if not silent:
-            print("[FATAL] Tidak dapat terhubung ke server. Pastikan pc-app sedang berjalan!")
+            print("  [!] FATAL: Tidak dapat terhubung ke server (Server Offline?)")
         return 500
 
 def rapid_tap(uid, times):
-    print(f"[*] Mensimulasikan tap beruntun ({times} kali) untuk menguji Anti-Double Tap...")
+    print_header("SIMULASI RAPID TAP (COOLDOWN TEST)")
+    print(f"[*] Menguji {times} tap beruntun untuk UID: '{uid}' dengan jeda 1 detik...")
+    
+    success = 0
+    errors = 0
+    
     for i in range(times):
-        print(f"\n--- Tap ke-{i+1} ---")
-        tap_card(uid)
-        time.sleep(1) # Jeda 1 detik antar tap
+        print(f"\n--- Percobaan {i+1}/{times} ---")
+        code = tap_card(uid)
+        if code == 200:
+            success += 1
+        else:
+            errors += 1
+        time.sleep(1)
+        
+    print(f"\n--- KESIMPULAN RAPID TAP ---")
+    print(f"Total Percobaan : {times}")
+    print(f"Berhasil (200)  : {success}")
+    print(f"Gagal / Error   : {errors}")
+    print("Catatan: Jika fitur cooldown berfungsi, tap kedua dst harus memiliki status sesuai tap pertama.")
+    print(f"{'-'*45}")
 
 def offline_sync(count):
-    print(f"[*] Mensimulasikan sinkronisasi {count} data offline secara beruntun...")
+    print_header("SIMULASI OFFLINE SYNC (BULK)")
+    print(f"[*] Mensimulasikan ESP32 mengirim {count} data absensi sekaligus...")
     success_count = 0
+    errors = {}
+    
+    start = time.time()
     for i in range(count):
         uid = f"OFFLINE{i:03d}"
         payload = {
@@ -56,13 +87,25 @@ def offline_sync(count):
             if response.status_code == 200:
                 success_count += 1
             else:
-                print(f"[ERROR] UID {uid}: {response.status_code} - {response.text}")
+                errors[response.status_code] = errors.get(response.status_code, 0) + 1
         except Exception as e:
-            print(f"[ERROR] Exception pada UID {uid}: {e}")
-    print(f"[DONE] {success_count}/{count} data offline berhasil disinkronkan.")
+            errors["Exception"] = errors.get("Exception", 0) + 1
+            
+    elapsed = time.time() - start
+    print(f"\n--- HASIL OFFLINE SYNC ---")
+    print(f"Total Data      : {count}")
+    print(f"Berhasil (200)  : {success_count}")
+    print(f"Gagal           : {count - success_count}")
+    if errors:
+        print("Rincian Gagal   :")
+        for code, c in errors.items():
+            print(f"  - Error {code} : {c} kali")
+    print(f"Waktu Eksekusi  : {elapsed:.2f} detik")
+    print(f"{'-'*45}")
 
 def stress_test(users, devices):
-    print(f"[*] Memulai Stress Test: {users} request dari {devices} perangkat bersamaan...")
+    print_header("STRESS TEST (LOAD TESTING)")
+    print(f"[*] Mensimulasikan {users} request dari {devices} mesin...")
     
     results = {"success": 0, "failed": 0, "errors": {}}
     lock = threading.Lock()
@@ -92,6 +135,7 @@ def stress_test(users, devices):
             
     threads = []
     reqs_per_device = users // devices
+    actual_users = reqs_per_device * devices
     
     start_time = time.time()
     for d in range(devices):
@@ -103,51 +147,81 @@ def stress_test(users, devices):
         t.join()
         
     end_time = time.time()
+    elapsed = end_time - start_time
     print(f"\n--- HASIL STRESS TEST ---")
-    print(f"Total Request   : {reqs_per_device * devices}")
+    print(f"Total Request   : {actual_users}")
     print(f"Berhasil (200)  : {results['success']}")
     print(f"Gagal           : {results['failed']}")
     if results["errors"]:
         print("Rincian Gagal   :")
         for code, count in results["errors"].items():
             print(f"  - Error {code}: {count} kali")
-    print(f"Waktu Eksekusi  : {end_time - start_time:.2f} detik")
-    print(f"Kecepatan       : {(reqs_per_device * devices) / (end_time - start_time):.2f} request/detik")
-    print(f"-------------------------")
+    print(f"Waktu Eksekusi  : {elapsed:.2f} detik")
+    print(f"Kecepatan       : {actual_users / elapsed:.2f} request/detik")
+    print(f"{'-'*45}")
 
 def sync_cards():
-    print(f"[*] Mensimulasikan ESP32 mengambil daftar kartu (polling)...")
-    start_time = time.time()
+    print_header("SIMULASI POLLING KARTU (CARD SYNC)")
+    print(f"[*] Mensimulasikan ESP32 mengunduh daftar kartu dari server...")
     try:
-        response = requests.get(f"{BASE_URL}/cards")
-        end_time = time.time()
+        start = time.time()
+        # ESP32 uses /api/cards/sync
+        response = requests.get(f"{BASE_URL}/cards/sync", headers={"X-API-Key": "ESP32-SECRET-KEY"})
+        elapsed = time.time() - start
+        
+        print(f"\n--- HASIL SYNC CARDS ---")
         if response.status_code == 200:
             data = response.json()
-            cards = data.get("cards", [])
-            print(f"[SUCCESS] Berhasil mengambil {len(cards)} kartu.")
-            print(f"[*] Response Time: {end_time - start_time:.3f} detik")
-            print(f"[*] Payload Size: {len(response.text)} bytes")
+            item_count = len(data) if isinstance(data, list) else len(data.get("cards", []))
+            size_kb = len(response.text) / 1024
+            
+            print(f"Status          : [√] SUKSES (HTTP 200)")
+            print(f"Jumlah Kartu    : {item_count} item terdaftar")
+            print(f"Ukuran Payload  : {size_kb:.2f} KB")
+            print(f"Waktu Respon    : {elapsed:.3f} detik")
+            
+            if size_kb > 15:
+                print("  [!] PERINGATAN: Ukuran JSON mulai besar, berpotensi membuat ESP32 kehabisan RAM/Memory.")
         else:
-            print(f"[ERROR] {response.status_code} - {response.text}")
+            print(f"Status          : [X] GAGAL (HTTP {response.status_code})")
+            print(f"Pesan Server    : {response.text}")
     except requests.exceptions.ConnectionError:
-        print("[FATAL] Tidak dapat terhubung ke server.")
+        print("  [!] FATAL: Tidak dapat terhubung ke server.")
+    print(f"{'-'*45}")
 
 def corrupt_tap():
-    print(f"[*] Mensimulasikan Negative Testing (Payload Rusak)...")
+    print_header("NEGATIVE TESTING (PAYLOAD RUSAK)")
+    print(f"[*] Menguji validasi server terhadap input tidak wajar/berbahaya...")
+    
     payloads = [
-        {"invalid_key": "12345"},           # Struktur salah
-        {"uid": ""},                        # UID Kosong
-        {"uid": "A" * 256},                 # UID sangat panjang (Overflow)
-        {"uid": "'; DROP TABLE cards; --"}  # SQL Injection attempt
+        ("Tanpa field nama/status", {"uid": "123"}),
+        ("UID Kosong", {"uid": "", "name": "Hack", "status": "IN", "timestamp": "2023-01-01"}),
+        ("UID Sangat Panjang (Buffer Overflow)", {"uid": "A" * 500, "name": "Hack", "status": "IN", "timestamp": "2023-01-01"}),
+        ("SQL Injection Attempt", {"uid": "'; DROP TABLE cards; --", "name": "Hack", "status": "IN", "timestamp": "2023-01-01"})
     ]
     
-    for i, payload in enumerate(payloads):
-        print(f"\n--- Skenario {i+1}: {payload} ---")
+    passed = 0
+    for i, (desc, payload) in enumerate(payloads):
+        print(f"\n--- Skenario {i+1}: {desc} ---")
         try:
+            start = time.time()
             response = requests.post(f"{BASE_URL}/attendance", json=payload)
-            print(f"Response: {response.status_code} - {response.text}")
+            elapsed = (time.time() - start) * 1000
+            
+            # Kita berekspektasi server menolaknya secara normal (HTTP 4xx atau 404), BUKAN crash (500)
+            if response.status_code >= 400 and response.status_code < 500:
+                print(f"  [√] AMAN : Server menolak dengan baik (HTTP {response.status_code} | {elapsed:.0f}ms)")
+                passed += 1
+            elif response.status_code == 500:
+                print(f"  [X] BAHAYA : Server Crash / Error 500! (Cek terminal Uvicorn)")
+            else:
+                print(f"  [!] ANEH : Server menerima payload rusak (HTTP {response.status_code})")
         except Exception as e:
-            print(f"Gagal memproses request: {e}")
+            print(f"  [!] KONEKSI ERROR: {e}")
+            
+    print(f"\n--- HASIL NEGATIVE TESTING ---")
+    print(f"Skor Keamanan   : {passed}/{len(payloads)} Lulus Uji Validasi")
+    print(f"{'-'*45}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="RFID Advanced Hardware Simulator")
@@ -180,6 +254,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "tap":
+        print_header("SIMULASI SINGLE TAP")
         tap_card(args.uid)
     elif args.command == "rapid":
         rapid_tap(args.uid, args.times)
