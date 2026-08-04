@@ -11,8 +11,16 @@ BASE_URL = "http://localhost:8000/api"
 def tap_card(uid, silent=False):
     if not silent:
         print(f"[*] Mensimulasikan tap kartu dengan UID: {uid}")
+    
+    payload = {
+        "uid": uid,
+        "name": "Simulasi User",
+        "status": "AUTO",
+        "timestamp": datetime.now().isoformat()
+    }
+    
     try:
-        response = requests.post(f"{BASE_URL}/attendance", json={"uid": uid})
+        response = requests.post(f"{BASE_URL}/attendance", json=payload)
         if not silent:
             if response.status_code == 200:
                 data = response.json()
@@ -39,6 +47,8 @@ def offline_sync(count):
         uid = f"OFFLINE{i:03d}"
         payload = {
             "uid": uid,
+            "name": f"Offline User {i}",
+            "status": "IN",
             "timestamp": datetime.now().isoformat()
         }
         try:
