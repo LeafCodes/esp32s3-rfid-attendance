@@ -64,10 +64,31 @@ def offline_sync(count):
 def stress_test(users, devices):
     print(f"[*] Memulai Stress Test: {users} request dari {devices} perangkat bersamaan...")
     
+    results = {"success": 0, "failed": 0, "errors": {}}
+    lock = threading.Lock()
+    
     def device_thread(device_id, req_count):
         for i in range(req_count):
             uid = f"USER{random.randint(100, 999)}"
-            tap_card(uid, silent=True)
+            payload = {
+                "uid": uid,
+                "name": f"Stress User {uid}",
+                "status": "AUTO",
+                "timestamp": datetime.now().isoformat()
+            }
+            try:
+                response = requests.post(f"{BASE_URL}/attendance", json=payload)
+                with lock:
+                    if response.status_code == 200:
+                        results["success"] += 1
+                    else:
+                        results["failed"] += 1
+                        code = response.status_code
+                        results["errors"][code] = results["errors"].get(code, 0) + 1
+            except Exception as e:
+                with lock:
+                    results["failed"] += 1
+                    results["errors"]["Exception"] = results["errors"].get("Exception", 0) + 1
             
     threads = []
     reqs_per_device = users // devices
@@ -82,7 +103,17 @@ def stress_test(users, devices):
         t.join()
         
     end_time = time.time()
-    print(f"[DONE] Stress Test Selesai. Waktu Eksekusi: {end_time - start_time:.2f} detik")
+    print(f"\n--- HASIL STRESS TEST ---")
+    print(f"Total Request   : {reqs_per_device * devices}")
+    print(f"Berhasil (200)  : {results['success']}")
+    print(f"Gagal           : {results['failed']}")
+    if results["errors"]:
+        print("Rincian Gagal   :")
+        for code, count in results["errors"].items():
+            print(f"  - Error {code}: {count} kali")
+    print(f"Waktu Eksekusi  : {end_time - start_time:.2f} detik")
+    print(f"Kecepatan       : {(reqs_per_device * devices) / (end_time - start_time):.2f} request/detik")
+    print(f"-------------------------")
 
 def sync_cards():
     print(f"[*] Mensimulasikan ESP32 mengambil daftar kartu (polling)...")
