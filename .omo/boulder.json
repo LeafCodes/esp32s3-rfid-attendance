@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": "esp32-rfid-attendance",
+  "works": {
+    "esp32-rfid-attendance": {
+      "work_id": "esp32-rfid-attendance",
+      "active_plan": ".omo/plans/esp32-rfid-attendance.md",
+      "plan_name": "esp32-rfid-attendance",
+      "session_ids": ["opencode:current"],
+      "status": "active",
+      "worktree_path": null
+    }
+  }
+}

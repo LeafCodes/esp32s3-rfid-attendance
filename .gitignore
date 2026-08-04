@@ -1,0 +1,29 @@
+# PlatformIO
+firmware/.pio/
+firmware/.vscode/
+firmware/build/
+
+# Python
+pc-app/__pycache__/
+pc-app/**/__pycache__/
+pc-app/*.pyc
+pc-app/.pytest_cache/
+pc-app/attendance.db
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+**/secrets.h

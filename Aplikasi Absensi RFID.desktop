@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Aplikasi Absensi RFID
+Comment=Aplikasi Server Absensi RFID ESP32-S3
+Exec=/home/fragzn/Documents/projek_absensi_rfid/run_app.sh
+Icon=utilities-terminal
+Terminal=true
+Categories=Utility;Application;

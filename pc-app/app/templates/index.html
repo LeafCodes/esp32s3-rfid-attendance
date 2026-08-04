@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Log Absensi</h2>
+<div id="attendance-log">
+    <p>Memuat data...</p>
+</div>
+<script>
+    async function loadAttendance() {
+        try {
+            const resp = await fetch('/api/attendance?limit=50');
+            const data = await resp.json();
+            const log = document.getElementById('attendance-log');
+            if (data && data.attendances) {
+                let html = '<table><thead><tr><th>UID</th><th>Nama</th><th>Jam</th><th>Status</th></tr></thead><tbody>';
+                data.attendances.forEach(a => {
+                    const t = new Date(a.timestamp).toLocaleString('id-ID');
+                    html += `<tr><td>${a.uid}</td><td>${a.name}</td><td>${t}</td><td>${a.status}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                log.innerHTML = html;
+            }
+        } catch(e) {
+            console.error('Failed to load attendance:', e);
+        }
+    }
+    loadAttendance();
+    setInterval(loadAttendance, 10000);
+</script>
+{% endblock %}

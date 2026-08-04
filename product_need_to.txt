@@ -1,0 +1,2 @@
+1. the product should be able to handle if pc is turned off or the wifi password is changed or off
+2. the data in app should be easily exported as an excel

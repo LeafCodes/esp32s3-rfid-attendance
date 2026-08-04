@@ -1,0 +1,5 @@
+1. connect product to power, product will transmit wifi, connect to product wifi and log in using the provided account/password, in manual guide
+2. it will guide user to open a certain link that open up a login portal, use the provided account to open up an ability to configure wifi so it can connect the product to local wifi
+3. after product connected to local wifi, he will search if there are an user that have a certain app to connect with the product
+4. after it detect a pc with a certain app. then product can be used to add or remove RFID so it can track time when they tap the RFID card
+5. after configure RFID, then product can be used to detect RFID card and match it with RFID inside EEPROM, then send data to app in PC via local wifi

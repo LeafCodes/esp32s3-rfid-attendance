@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "powershell",
+      "Shell(pip:*)",
+      "Shell(python -c import openpyxl; wb=openpyxl.load_workbook('hardware_shopping_list.xlsx'); ws=wb.active; print('Sheet:', ws.title); print('Dims:', ws.dimensions); print('Merged:', list(ws.merged_cells.ranges)); [print(f' {c.coordinate}: {c.value!r} bold={c.font.bold} fill={c.fill.start_color.rgb if c.fill and c.fill.start_color else None}') for r in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=ws.max_column) for c in r]; [print() for r in ws.iter_rows(min_row=1, max_row=2)])",
+      "Shell(python -c \"import sys; print(sys.executable)\" && pip list --format=columns 2>nul | findstr openpyxl)",
+      "Shell(C:\\Users\\Windows 10\\AppData\\Local\\Programs\\Python\\Python312\\python.exe:*)",
+      "Shell(python --version)",
+      "Shell(where:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

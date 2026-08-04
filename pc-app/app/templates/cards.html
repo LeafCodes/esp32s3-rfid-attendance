@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Kelola Kartu RFID</h2>
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+    <h3>📱 Mode Scan Tap Otomatis (Tanpa Perlu Ketik UID)</h3>
+    <p style="font-size: 0.9em; color: #6c757d;">Cukup ketik nama karyawan, klik tombol di bawah, lalu tempelkan kartu RFID baru ke alat ESP32-S3.</p>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="enroll-name" placeholder="Nama Karyawan Baru" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; flex: 1;">
+        <button onclick="startAutoEnroll()" style="background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            📱 Mulai Scan Tap Kartu
+        </button>
+    </div>
+    <div id="enroll-status" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center;"></div>
+</div>
+
+<details style="margin-bottom: 20px;">
+    <summary style="cursor: pointer; font-weight: bold; color: #007bff;">➕ Atau Tambah Kartu Manual (Ketik UID Manual)</summary>
+    <form id="add-card-form" onsubmit="addCard(event)" style="margin-top: 10px; display: flex; gap: 10px;">
+        <input type="text" name="uid" placeholder="UID Kartu (misal: F1F7F801)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+        <input type="text" name="name" placeholder="Nama Karyawan" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+        <button type="submit" style="padding: 8px 16px;">Simpan Manual</button>
+    </form>
+</details>
+
+<h3>Daftar Kartu Terdaftar</h3>
+<table id="cards-table">
+    <thead>
+        <tr><th>UID</th><th>Nama Karyawan</th><th>Tanggal Terdaftar</th><th>Aksi</th></tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    let pollInterval = null;
+
+    async function loadCards() {
+        try {
+            const resp = await fetch('/api/cards/');
+            const cards = await resp.json();
+            const tbody = document.querySelector('#cards-table tbody');
+            tbody.innerHTML = '';
+            cards.forEach(c => {
+                const tr = document.createElement('tr');
+                const d = new Date(c.added_at).toLocaleDateString('id-ID');
+                tr.innerHTML = `<td><code>${c.uid}</code></td><td><strong>${c.name}</strong></td><td>${d}</td>
+                    <td><button onclick="deleteCard(${c.id})" style="background-color: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">Hapus</button></td>`;
+                tbody.appendChild(tr);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function startAutoEnroll() {
+        const nameInput = document.getElementById('enroll-name');
+        const name = nameInput.value.trim();
+        if (!name) {
+            alert("Silakan masukkan nama karyawan terlebih dahulu!");
+            return;
+        }
+
+        const resp = await fetch('/api/cards/enroll/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        });
+        const data = await resp.json();
+
+        const statusBox = document.getElementById('enroll-status');
+        statusBox.style.display = 'block';
+        statusBox.style.backgroundColor = '#fff3cd';
+        statusBox.style.color = '#856404';
+        statusBox.style.border = '1px solid #ffeeba';
+        statusBox.innerHTML = `⏳ <strong>MENUNGGU TAP:</strong> Silakan tempelkan kartu RFID baru untuk <u>${name}</u> pada alat ESP32-S3... <button onclick="cancelEnroll()" style="margin-left: 10px; padding: 2px 8px;">Batal</button>`;
+
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(checkEnrollStatus, 1000);
+    }
+
+    async function checkEnrollStatus() {
+        try {
+            const resp = await fetch('/api/cards/enroll/status');
+            const status = await resp.json();
+            const statusBox = document.getElementById('enroll-status');
+
+            if (status.uid) {
+                clearInterval(pollInterval);
+                statusBox.style.backgroundColor = '#d4edda';
+                statusBox.style.color = '#155724';
+                statusBox.style.border = '1px solid #c3e6cb';
+                statusBox.innerHTML = `✅ <strong>BERHASIL!</strong> Kartu dengan UID <code>${status.uid}</code> telah terdaftar untuk <strong>${status.name}</strong>!`;
+                document.getElementById('enroll-name').value = '';
+                loadCards();
+                setTimeout(() => { statusBox.style.display = 'none'; }, 6000);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function cancelEnroll() {
+        if (pollInterval) clearInterval(pollInterval);
+        await fetch('/api/cards/enroll/cancel', { method: 'POST' });
+        const statusBox = document.getElementById('enroll-status');
+        statusBox.style.display = 'none';
+    }
+
+    async function addCard(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = { uid: form.uid.value, name: form.name.value };
+        await fetch('/api/cards/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        form.reset();
+        loadCards();
+    }
+
+    async function deleteCard(id) {
+        if (confirm("Yakin ingin menghapus kartu ini?")) {
+            await fetch(`/api/cards/${id}`, { method: 'DELETE' });
+            loadCards();
+        }
+    }
+
+    loadCards();
+</script>
+{% endblock %}
