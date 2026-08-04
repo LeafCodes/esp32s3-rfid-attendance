@@ -55,8 +55,10 @@ def offline_sync(count):
             response = requests.post(f"{BASE_URL}/attendance", json=payload)
             if response.status_code == 200:
                 success_count += 1
-        except Exception:
-            pass
+            else:
+                print(f"[ERROR] UID {uid}: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"[ERROR] Exception pada UID {uid}: {e}")
     print(f"[DONE] {success_count}/{count} data offline berhasil disinkronkan.")
 
 def stress_test(users, devices):
