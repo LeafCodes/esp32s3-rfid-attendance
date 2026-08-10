@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Log Absensi</h2>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Log Absensi</h2>
+    <a href="/api/export/excel" style="padding: 10px 15px; background-color: #217346; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+        📊 Export ke Excel
+    </a>
+</div>
 <div id="attendance-log">
     <p>Memuat data...</p>
 </div>
