@@ -58,6 +58,9 @@ void setup() {
     } else {
         state.setState(STATE_WIFI_PORTAL);
         lcdDisplay.showError("WiFi Portal");
+        Serial.println("Gagal koneksi atau Portal Timeout. Restarting ESP32...");
+        delay(3000);
+        ESP.restart();
     }
 
     Serial.println("=== System Ready ===\n");
