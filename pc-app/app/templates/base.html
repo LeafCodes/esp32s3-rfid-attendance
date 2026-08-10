@@ -10,8 +10,12 @@
     <nav>
         <h1>RFID Attendance</h1>
         <ul>
+            {% if request.cookies.get('session_token') %}
             <li><a href="/">Dashboard</a></li>
             <li><a href="/cards">Kelola Kartu</a></li>
+            <li><a href="/settings">⚙️ Pengaturan</a></li>
+            <li><a href="/logout">🚪 Logout</a></li>
+            {% endif %}
         </ul>
     </nav>
     <main>

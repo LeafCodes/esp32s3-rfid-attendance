@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
+    <h2>Pengaturan Akun Admin</h2>
+    <p>Ubah username dan password untuk login ke dashboard.</p>
+    
+    {% if error %}
+    <div style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        Password lama salah! Perubahan dibatalkan.
+    </div>
+    {% endif %}
+
+    <form action="/settings" method="post" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+        <div>
+            <label for="new_username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username Baru</label>
+            <input type="text" id="new_username" name="new_username" required style="width: 100%; padding: 8px; box-sizing: border-box;" value="{{ request.cookies.get('session_token') }}">
+        </div>
+        
+        <div>
+            <label for="new_password" style="display: block; margin-bottom: 5px; font-weight: bold;">Password Baru</label>
+            <input type="password" id="new_password" name="new_password" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+        </div>
+
+        <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <div>
+            <label for="old_password" style="display: block; margin-bottom: 5px; font-weight: bold; color: #d32f2f;">Konfirmasi Password Lama</label>
+            <input type="password" id="old_password" name="old_password" required style="width: 100%; padding: 8px; box-sizing: border-box;" placeholder="Masukkan password saat ini untuk menyimpan">
+        </div>
+        
+        <button type="submit" style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px;">
+            Simpan Perubahan
+        </button>
+    </form>
+</div>
+{% endblock %}

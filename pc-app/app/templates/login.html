@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
+    <h2 style="text-align: center;">Login Admin</h2>
+    
+    {% if error %}
+    <div style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        Username atau Password salah!
+    </div>
+    {% endif %}
+    
+    {% if request.query_params.get('success') %}
+    <div style="background-color: #e8f5e9; color: #2e7d32; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        Password berhasil diubah. Silakan login kembali.
+    </div>
+    {% endif %}
+
+    <form action="/login" method="post" style="display: flex; flex-direction: column; gap: 15px;">
+        <div>
+            <label for="username" style="display: block; margin-bottom: 5px;">Username</label>
+            <input type="text" id="username" name="username" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+        </div>
+        <div>
+            <label for="password" style="display: block; margin-bottom: 5px;">Password</label>
+            <input type="password" id="password" name="password" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+        </div>
+        <button type="submit" style="padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+            Login
+        </button>
+    </form>
+</div>
+{% endblock %}

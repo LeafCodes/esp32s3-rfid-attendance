@@ -27,3 +27,11 @@ class Attendance(Base):
     status = Column(String(4), nullable=False)  # IN or OUT
 
     card = relationship("Card", back_populates="attendances")
+
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(64), unique=True, nullable=False)
+    password = Column(String(128), nullable=False)

@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routes import attendance, cards, export, dashboard
-from app.database import engine, Base
+from app.routes import attendance, cards, export, dashboard, auth
+from app.database import engine, Base, SessionLocal
+from app.models import Admin
 from app.services.mdns import start_mdns, stop_mdns
 import asyncio
 
@@ -21,12 +22,25 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(attendance.router)
 app.include_router(cards.router)
 app.include_router(export.router)
+app.include_router(auth.router)
 app.include_router(dashboard.router)
 
 
 @app.on_event("startup")
 async def startup():
     Base.metadata.create_all(bind=engine)
+    
+    # Initialize default admin if not exists
+    db = SessionLocal()
+    try:
+        admin = db.query(Admin).first()
+        if not admin:
+            default_admin = Admin(username="admin", password="admin")
+            db.add(default_admin)
+            db.commit()
+    finally:
+        db.close()
+        
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, start_mdns)
 
