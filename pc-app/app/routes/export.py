@@ -18,12 +18,15 @@ async def export_excel(
     start: Optional[str] = Query(None),
     end: Optional[str] = Query(None),
     uid: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     query = db.query(Attendance)
 
     if uid:
         query = query.filter(Attendance.uid == uid)
+    if status:
+        query = query.filter(Attendance.status == status)
     if start:
         try:
             query = query.filter(Attendance.timestamp >= datetime.fromisoformat(start))

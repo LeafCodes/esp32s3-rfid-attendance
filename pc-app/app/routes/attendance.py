@@ -105,12 +105,15 @@ async def get_attendance(
     start: Optional[str] = None,
     end: Optional[str] = None,
     uid: Optional[str] = None,
+    status: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Attendance)
 
     if uid:
         query = query.filter(Attendance.uid == uid)
+    if status:
+        query = query.filter(Attendance.status == status)
     if start:
         try:
             start_dt = datetime.fromisoformat(start)

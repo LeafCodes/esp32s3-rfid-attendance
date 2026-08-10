@@ -1,25 +1,124 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
     <h2>Log Absensi</h2>
-    <a href="/api/export/excel" style="padding: 10px 15px; background-color: #217346; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    <a id="btn-export" href="/api/export/excel" style="padding: 10px 15px; background-color: #217346; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
         📊 Export ke Excel
     </a>
 </div>
+
+<!-- FILTER SECTION -->
+<div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e0e0e0; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+    <div style="display: flex; flex-direction: column;">
+        <label for="filter-uid" style="font-size: 14px; margin-bottom: 5px; font-weight: bold;">Pilih Karyawan</label>
+        <select id="filter-uid" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; min-width: 150px;">
+            <option value="">Semua Karyawan</option>
+        </select>
+    </div>
+    
+    <div style="display: flex; flex-direction: column;">
+        <label for="filter-start" style="font-size: 14px; margin-bottom: 5px; font-weight: bold;">Dari Tanggal</label>
+        <input type="date" id="filter-start" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+    </div>
+
+    <div style="display: flex; flex-direction: column;">
+        <label for="filter-end" style="font-size: 14px; margin-bottom: 5px; font-weight: bold;">Sampai Tanggal</label>
+        <input type="date" id="filter-end" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+    </div>
+
+    <div style="display: flex; flex-direction: column;">
+        <label for="filter-status" style="font-size: 14px; margin-bottom: 5px; font-weight: bold;">Status</label>
+        <select id="filter-status" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <option value="">Semua Status</option>
+            <option value="IN">MASUK (IN)</option>
+            <option value="OUT">KELUAR (OUT)</option>
+        </select>
+    </div>
+
+    <div>
+        <button onclick="applyFilters()" style="padding: 9px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Terapkan</button>
+        <button onclick="resetFilters()" style="padding: 9px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px;">Reset</button>
+    </div>
+</div>
+
 <div id="attendance-log">
     <p>Memuat data...</p>
 </div>
+
 <script>
+    let filterParams = "";
+
+    async function loadCards() {
+        try {
+            const resp = await fetch('/api/cards');
+            const data = await resp.json();
+            const select = document.getElementById('filter-uid');
+            if (data && data.cards) {
+                data.cards.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.uid;
+                    opt.textContent = `${c.name} (${c.uid})`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch(e) {
+            console.error('Failed to load cards:', e);
+        }
+    }
+
+    function buildQuery() {
+        const uid = document.getElementById('filter-uid').value;
+        const start = document.getElementById('filter-start').value;
+        let end = document.getElementById('filter-end').value;
+        const status = document.getElementById('filter-status').value;
+        
+        let params = new URLSearchParams();
+        params.append('limit', '500'); // Increase limit if filtering
+        
+        if (uid) params.append('uid', uid);
+        if (status) params.append('status', status);
+        if (start) {
+            // ISO format start of day
+            params.append('start', start + 'T00:00:00');
+        }
+        if (end) {
+            // ISO format end of day
+            params.append('end', end + 'T23:59:59');
+        }
+        
+        return params.toString();
+    }
+
+    function applyFilters() {
+        filterParams = buildQuery();
+        document.getElementById('btn-export').href = '/api/export/excel?' + filterParams;
+        loadAttendance();
+    }
+
+    function resetFilters() {
+        document.getElementById('filter-uid').value = "";
+        document.getElementById('filter-start').value = "";
+        document.getElementById('filter-end').value = "";
+        document.getElementById('filter-status').value = "";
+        applyFilters();
+    }
+
     async function loadAttendance() {
         try {
-            const resp = await fetch('/api/attendance?limit=50');
+            const query = filterParams || 'limit=50';
+            const resp = await fetch('/api/attendance?' + query);
             const data = await resp.json();
             const log = document.getElementById('attendance-log');
             if (data && data.attendances) {
+                if (data.attendances.length === 0) {
+                    log.innerHTML = '<p style="text-align:center; padding: 20px; background: #f9f9f9; border-radius: 8px;">Tidak ada data ditemukan untuk filter ini.</p>';
+                    return;
+                }
                 let html = '<table><thead><tr><th>UID</th><th>Nama</th><th>Jam</th><th>Status</th></tr></thead><tbody>';
                 data.attendances.forEach(a => {
                     const t = new Date(a.timestamp).toLocaleString('id-ID');
-                    html += `<tr><td>${a.uid}</td><td>${a.name}</td><td>${t}</td><td>${a.status}</td></tr>`;
+                    const badge = a.status === 'IN' ? '<span style="color: green; font-weight: bold;">MASUK</span>' : '<span style="color: red; font-weight: bold;">KELUAR</span>';
+                    html += `<tr><td>${a.uid}</td><td>${a.name}</td><td>${t}</td><td>${badge}</td></tr>`;
                 });
                 html += '</tbody></table>';
                 log.innerHTML = html;
@@ -28,6 +127,8 @@
             console.error('Failed to load attendance:', e);
         }
     }
+    
+    loadCards();
     loadAttendance();
     setInterval(loadAttendance, 10000);
 </script>
