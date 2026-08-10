@@ -53,8 +53,8 @@
             const resp = await fetch('/api/cards');
             const data = await resp.json();
             const select = document.getElementById('filter-uid');
-            if (data && data.cards) {
-                data.cards.forEach(c => {
+            if (Array.isArray(data)) {
+                data.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.uid;
                     opt.textContent = `${c.name} (${c.uid})`;
