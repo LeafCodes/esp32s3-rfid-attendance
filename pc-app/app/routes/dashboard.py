@@ -17,21 +17,27 @@ def check_auth(request: Request):
 async def dashboard(request: Request):
     if not check_auth(request):
         return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("index.html", {"request": request})
+    response = templates.TemplateResponse("index.html", {"request": request})
+    response.set_cookie(key="session_token", value=request.cookies.get("session_token"), httponly=True, max_age=600)
+    return response
 
 
 @router.get("/cards", response_class=HTMLResponse)
 async def cards_page(request: Request):
     if not check_auth(request):
         return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("cards.html", {"request": request})
+    response = templates.TemplateResponse("cards.html", {"request": request})
+    response.set_cookie(key="session_token", value=request.cookies.get("session_token"), httponly=True, max_age=600)
+    return response
 
 
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request, error: str = None, success: str = None):
     if not check_auth(request):
         return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("settings.html", {"request": request, "error": error, "success": success})
+    response = templates.TemplateResponse("settings.html", {"request": request, "error": error, "success": success})
+    response.set_cookie(key="session_token", value=request.cookies.get("session_token"), httponly=True, max_age=600)
+    return response
 
 
 @router.post("/settings")

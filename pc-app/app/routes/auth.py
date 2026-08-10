@@ -23,7 +23,7 @@ async def login(
     
     if admin:
         res = RedirectResponse(url="/", status_code=302)
-        res.set_cookie(key="session_token", value=admin.username, httponly=True)
+        res.set_cookie(key="session_token", value=admin.username, httponly=True, max_age=600)
         return res
         
     return RedirectResponse(url="/login?error=1", status_code=302)
