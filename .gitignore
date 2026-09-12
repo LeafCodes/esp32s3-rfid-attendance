@@ -15,15 +15,25 @@ pc-app/attendance.db
 .venv/
 venv/
 
-# IDE
+# IDE & Tooling
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# OS & Sync Files
 .DS_Store
 Thumbs.db
+sync.ffs_db
+*.ffs_db
+
+# CAD & Hardware Backups
+*.FCBak
+*.kicad_prl
+*-bak
+*-bak-*
+_autosave-*
+**/.history/
 
 # Secrets
 **/secrets.h
