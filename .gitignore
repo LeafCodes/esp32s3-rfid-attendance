@@ -37,3 +37,9 @@ _autosave-*
 
 # Secrets
 **/secrets.h
+
+
+# Media & Documents
+*.pdf
+*.jpg
+*.jpeg

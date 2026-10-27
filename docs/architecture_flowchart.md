@@ -150,45 +150,45 @@ Diagram berikut menjelaskan siklus hidup (*lifecycle*) program firmware mulai da
 
 ```mermaid
 flowchart TD
-    Start([Mulai / Power On]) --> InitHW[Inisialisasi I/O:\nLCD, SPI MFRC522, I2C, Buzzer, EEPROM]
-    InitHW --> CheckWiFi{Apakah Kredensial\nWiFi Tersimpan?}
+    Start(["Mulai / Power On"]) --> InitHW["Inisialisasi I/O:\nLCD, SPI MFRC522, I2C, Buzzer, EEPROM"]
+    InitHW --> CheckWiFi{"Apakah Kredensial\nWiFi Tersimpan?"}
     
-    CheckWiFi -- Tidak Ada / Gagal --> StartAP[Aktifkan WiFi Captive Portal\nSSID: Absensi-Setup]
-    StartAP --> UserConfig[Pengguna Mengatur SSID & Password via Web]
-    UserConfig --> ConnectWiFi[Sambungkan ke Router WiFi]
-    CheckWiFi -- Ada --> ConnectWiFi
+    CheckWiFi -->|"Tidak Ada / Gagal"| StartAP["Aktifkan WiFi Captive Portal\nSSID: Absensi-Setup"]
+    StartAP --> UserConfig["Pengguna Mengatur SSID & Password via Web"]
+    UserConfig --> ConnectWiFi["Sambungkan ke Router WiFi"]
+    CheckWiFi -->|"Ada"| ConnectWiFi
     
-    ConnectWiFi --> SyncNTP[Sinkronisasi Jam Internal via NTP Client]
-    SyncNTP --> ResolveMDNS[Resolusi Server via mDNS:\nCari 'absensi-pc.local']
-    ResolveMDNS --> SyncCardCache[Tarik Daftar UID Kartu Terbaru\nSimpan ke EEPROM / LittleFS]
-    SyncCardCache --> LoopIdle((Mode Siaga / IDLE))
+    ConnectWiFi --> SyncNTP["Sinkronisasi Jam Internal via NTP Client"]
+    SyncNTP --> ResolveMDNS["Resolusi Server via mDNS:\nCari absensi-pc.local"]
+    ResolveMDNS --> SyncCardCache["Tarik Daftar UID Kartu Terbaru\nSimpan ke EEPROM / LittleFS"]
+    SyncCardCache --> LoopIdle(("Mode Siaga / IDLE"))
     
     %% Siklus Loop Siaga
-    LoopIdle --> CheckCard{Ada Kartu RFID\nDitempel?}
-    CheckCard -- Tidak --> CheckTimers{Cek Timer Berkala:\nSync Buffer / Cache?}
-    CheckTimers -- Ada Jadwal --> RunSync[Sinkronisasi Buffer Luring ke Server]
+    LoopIdle --> CheckCard{"Ada Kartu RFID\nDitempel?"}
+    CheckCard -->|"Tidak"| CheckTimers{"Cek Timer Berkala:\nSync Buffer / Cache?"}
+    CheckTimers -->|"Ada Jadwal"| RunSync["Sinkronisasi Buffer Luring ke Server"]
     RunSync --> LoopIdle
-    CheckTimers -- Belum Waktunya --> LoopIdle
+    CheckTimers -->|"Belum Waktunya"| LoopIdle
     
     %% Alur Pembacaan Kartu
-    CheckCard -- Ya --> ReadUID[Baca UID Kartu via SPI MFRC522]
-    ReadUID --> IsServerOnline{Server PC\nDapat Dijangkau?}
+    CheckCard -->|"Ya"| ReadUID["Baca UID Kartu via SPI MFRC522"]
+    ReadUID --> IsServerOnline{"Server PC\nDapat Dijangkau?"}
     
     %% Jalur Daring (Online)
-    IsServerOnline -- Ya --> PostServer[Kirim POST /api/attendance\nPayload: UID + Timestamp]
-    PostServer --> CheckResponse{Hasil Respon Server}
-    CheckResponse -- 200 OK (Presensi) --> LCD_OK[LCD: Nama Pegawai & Status IN/OUT\nBuzzer: Bip 1x | LED Hijau ON]
-    CheckResponse -- 200 OK (Enroll) --> LCD_Enroll[LCD: Nama Pegawai & KARTU TERDAFTAR\nBuzzer: Bip 2x | LED Hijau ON]
-    CheckResponse -- 404 (Tidak Dikenal) --> LCD_Unknown[LCD: KARTU TIDAK TERDAFTAR\nBuzzer: Bip Panjang | LED Merah ON]
+    IsServerOnline -->|"Ya"| PostServer["Kirim POST /api/attendance\nPayload: UID + Timestamp"]
+    PostServer --> CheckResponse{"Hasil Respon Server"}
+    CheckResponse -->|"200 OK (Presensi)"| LCD_OK["LCD: Nama Pegawai & Status IN/OUT\nBuzzer: Bip 1x + LED Hijau ON"]
+    CheckResponse -->|"200 OK (Enroll)"| LCD_Enroll["LCD: Nama Pegawai & KARTU TERDAFTAR\nBuzzer: Bip 2x + LED Hijau ON"]
+    CheckResponse -->|"404 (Tidak Dikenal)"| LCD_Unknown["LCD: KARTU TIDAK TERDAFTAR\nBuzzer: Bip Panjang + LED Merah ON"]
     
     %% Jalur Luring (Offline)
-    IsServerOnline -- Tidak --> CheckEEPROM{Apakah UID Ada\ndi Cache EEPROM?}
-    CheckEEPROM -- Ada --> SaveLocalBuffer[Simpan Log ke LittleFS Buffer\nFormat: UID + Waktu Lokal]
-    SaveLocalBuffer --> LCD_OfflineOK[LCD: Nama Pegawai & OFFLINE SAVED\nBuzzer: Bip 2x | LED Hijau ON]
-    CheckEEPROM -- Tidak Ada --> LCD_Unknown
+    IsServerOnline -->|"Tidak"| CheckEEPROM{"Apakah UID Ada\ndi Cache EEPROM?"}
+    CheckEEPROM -->|"Ada"| SaveLocalBuffer["Simpan Log ke LittleFS Buffer\nFormat: UID + Waktu Lokal"]
+    SaveLocalBuffer --> LCD_OfflineOK["LCD: Nama Pegawai & OFFLINE SAVED\nBuzzer: Bip 2x + LED Hijau ON"]
+    CheckEEPROM -->|"Tidak Ada"| LCD_Unknown
     
     %% Akhir Transaksi
-    LCD_OK --> HoldDelay[Tahan Tampilan Selama 2 Detik]
+    LCD_OK --> HoldDelay["Tahan Tampilan Selama 2 Detik"]
     LCD_Enroll --> HoldDelay
     LCD_Unknown --> HoldDelay
     LCD_OfflineOK --> HoldDelay
@@ -203,39 +203,39 @@ Diagram berikut memetakan keputusan logika di sisi backend komputer saat menerim
 
 ```mermaid
 flowchart TD
-    API_Start([Menerima Request:\nPOST /api/attendance]) --> QueryDB[Cari Record Kartu di SQLite berdasarkan UID]
+    API_Start(["Menerima Request:\nPOST /api/attendance"]) --> QueryDB["Cari Record Kartu di SQLite berdasarkan UID"]
     
-    QueryDB --> CheckEnrollMode{Apakah Mode Pendaftaran\n(Enrollment) Aktif?}
+    QueryDB --> CheckEnrollMode{"Apakah Mode Pendaftaran\n(Enrollment) Aktif?"}
     
     %% Cabang Pendaftaran
-    CheckEnrollMode -- Ya --> CardExistsEnroll{Kartu Sudah\nPernah Terdaftar?}
-    CardExistsEnroll -- Ya --> UpdateCard[Perbarui Nama / Aktifkan Kembali Status Kartu]
-    CardExistsEnroll -- Tidak --> InsertCard[Insert Kartu Baru ke Database]
-    UpdateCard --> DeactivateEnroll[Matikan Status Enrollment Mode]
+    CheckEnrollMode -->|"Ya"| CardExistsEnroll{"Kartu Sudah\nPernah Terdaftar?"}
+    CardExistsEnroll -->|"Ya"| UpdateCard["Perbarui Nama / Aktifkan Kembali Status Kartu"]
+    CardExistsEnroll -->|"Tidak"| InsertCard["Insert Kartu Baru ke Database"]
+    UpdateCard --> DeactivateEnroll["Matikan Status Enrollment Mode"]
     InsertCard --> DeactivateEnroll
-    DeactivateEnroll --> ReturnEnroll([Kirim HTTP 200: Status 'enrolled'])
+    DeactivateEnroll --> ReturnEnroll(["Kirim HTTP 200: Status 'enrolled'"])
     
     %% Cabang Presensi Normal
-    CheckEnrollMode -- Tidak --> IsCardRegistered{Kartu Ditemukan\n& Berstatus Aktif?}
-    IsCardRegistered -- Tidak --> Return404([Kirim HTTP 404: 'Kartu Tidak Dikenal'])
+    CheckEnrollMode -->|"Tidak"| IsCardRegistered{"Kartu Ditemukan\n& Berstatus Aktif?"}
+    IsCardRegistered -->|"Tidak"| Return404(["Kirim HTTP 404: Kartu Tidak Dikenal"])
     
-    IsCardRegistered -- Ya --> GetLastLog[Ambil Log Kehadiran Terakhir Kartu Ini Hari Ini]
-    GetLastLog --> HasHistory{Pernah Tap Hari Ini?}
+    IsCardRegistered -->|"Ya"| GetLastLog["Ambil Log Kehadiran Terakhir Kartu Ini Hari Ini"]
+    GetLastLog --> HasHistory{"Pernah Tap Hari Ini?"}
     
-    HasHistory -- Ya --> CalcCooldown[Hitung Selisih Waktu:\nSekarang - Waktu Tap Terakhir]
-    CalcCooldown --> IsDebounce{Selisih Waktu\n< 10 Detik?}
+    HasHistory -->|"Ya"| CalcCooldown["Hitung Selisih Waktu:\nSekarang - Waktu Tap Terakhir"]
+    CalcCooldown --> IsDebounce{"Selisih Waktu < 10 Detik?"}
     
     %% Penanganan Double-Tap
-    IsDebounce -- Ya --> ReturnDebounce([Kirim HTTP 200: 'Double-Tap Terdeteksi'\nStatus Tetap & Jangan Gandakan Data])
+    IsDebounce -->|"Ya"| ReturnDebounce(["Kirim HTTP 200: Double-Tap Terdeteksi\nStatus Tetap & Jangan Gandakan Data"])
     
     %% Penentuan Status IN / OUT
-    IsDebounce -- Tidak --> ToggleStatus[Jika Status Terakhir 'IN' -> Jadikan 'OUT'\nJika Status Terakhir 'OUT' -> Jadikan 'IN']
-    HasHistory -- Tidak (Pertama Kali) --> SetStatusIn[Set Status Menjadi 'IN' (Masuk)]
+    IsDebounce -->|"Tidak"| ToggleStatus["Jika Status Terakhir IN -> Jadikan OUT\nJika Status Terakhir OUT -> Jadikan IN"]
+    HasHistory -->|"Tidak (Pertama Kali)"| SetStatusIn["Set Status Menjadi IN (Masuk)"]
     
-    ToggleStatus --> SaveLog[Insert Rekaman Log Baru ke Tabel attendance_logs]
+    ToggleStatus --> SaveLog["Insert Rekaman Log Baru ke Tabel attendance_logs"]
     SetStatusIn --> SaveLog
     
-    SaveLog --> ReturnSuccess([Kirim HTTP 200: Nama Karyawan & Status Terbaru])
+    SaveLog --> ReturnSuccess(["Kirim HTTP 200: Nama Karyawan & Status Terbaru"])
 ```
 
 ---

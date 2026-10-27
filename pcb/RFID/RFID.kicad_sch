@@ -1,0 +1,106 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "2a0a8906-47ae-4e87-8140-5ed596a6a4f8")
+	(paper "A4")
+	(lib_symbols)
+	(sheet
+		(at 178.435 24.13)
+		(size 96.52 76.835)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "67d8488a-a39a-4b12-ae8a-c58e7689d1b8")
+		(property "Sheetname" "Power_management_n_Protection"
+			(at 178.435 23.4184 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "Power_management_n_Protection_sch.kicad_sch"
+			(at 178.435 101.5496 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "RFID"
+				(path "/2a0a8906-47ae-4e87-8140-5ed596a6a4f8"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 21.59 24.765)
+		(size 90.805 76.835)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "6990e08c-c2b2-4f32-9ceb-f61ab424e210")
+		(property "Sheetname" "System block"
+			(at 21.59 24.0534 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "untitled.kicad_sch"
+			(at 21.59 102.1846 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "RFID"
+				(path "/2a0a8906-47ae-4e87-8140-5ed596a6a4f8"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
